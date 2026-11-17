@@ -7,9 +7,10 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { create } from '@bufbuild/protobuf';
 import * as lib from '../../lib/index.js';
 import { decodeMessageContent, decodePushMessages } from '../../lib/proto/decoders.js';
-import { resolveCmd } from '../../lib/proto/registry.js';
+import { protoType, resolveCmd } from '../../lib/proto/registry.js';
 
 const fixtures = JSON.parse(
   readFileSync(new URL('../fixtures/parity.json', import.meta.url), 'utf8'),
@@ -125,5 +126,22 @@ test('权限检查在 Node 下可用：只检查最外层调用，被拒绝时�
   } finally {
     lib.LarkClient.prototype.api = original;
     rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('网关声明 8.3.0 以获取新版卡片正文', async () => {
+  const original = globalThis.fetch;
+  let headers;
+  globalThis.fetch = async (_url, options) => {
+    headers = options.headers;
+    return new Response(new Uint8Array([1, 2]));
+  };
+  try {
+    const auth = new lib.LarkAuth('/nonexistent/lark-test-credentials.json');
+    const client = new lib.LarkClient(auth);
+    assert.deepEqual(await client.gatewayPost(create(protoType('Packet'))), new Uint8Array([1, 2]));
+    assert.equal(headers['x-command-version'], '8.3.0');
+  } finally {
+    globalThis.fetch = original;
   }
 });

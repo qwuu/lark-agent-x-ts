@@ -489,7 +489,7 @@ export class LarkClient {
         'user-agent': USER_AGENT,
         'x-appid': this.auth.gatewayAppId,
         'x-command': String(cmd),
-        'x-command-version': '5.7.0',
+        'x-command-version': '8.3.0',
         'x-lgw-os-type': '1',
         'x-lgw-terminal-type': '2',
         'x-source': 'web',
